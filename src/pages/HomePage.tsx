@@ -1,15 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, ArrowRight, Star } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { ProductCard } from '../components/ProductCard'
 import { apiRequest } from '../lib/api'
 import type { PaginatedProducts } from '../types/catalog'
+import type { ApiData, Category } from '../types/commerce'
 import landingVideo from '../assets/landing_page_video.mp4'
-
-const categories = [
-  { name: 'Hoodies', code: '01', className: 'hoodies' },
-  { name: 'Tees', code: '02', className: 'tees' },
-  { name: 'Bottoms', code: '03', className: 'bottoms' },
-]
 
 export function HomePage() {
   const products = useQuery({
@@ -17,6 +13,11 @@ export function HomePage() {
     queryFn: () =>
       apiRequest<PaginatedProducts>('/api/v1/products?sort=newest&limit=4'),
   })
+  const categories = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => (await apiRequest<ApiData<Category[]>>('/api/v1/categories')).data,
+  })
+  const shopCategories = categories.data?.flatMap((category) => category.children.length ? category.children : [category]).slice(0, 3) ?? []
 
   return (
     <>
@@ -34,28 +35,24 @@ export function HomePage() {
               Shop the drop <ArrowDown aria-hidden="true" />
             </a>
           </div>
-          <div className="hero-mark" aria-hidden="true">
-            <span>R</span>
-            <p>ROGUEON</p>
-          </div>
           <div className="hero-index" aria-hidden="true">EST. 2026 — KTM</div>
         </section>
 
-        <section className="category-section" id="categories">
+        {shopCategories.length > 0 && <section className="category-section" id="categories">
           <div className="section-heading">
-            <p>Browse by uniform</p>
-            <h2>THE ESSENTIALS</h2>
+            <p>Shop by category</p>
+            <h2>EXPLORE THE COLLECTION</h2>
           </div>
           <div className="category-grid">
-            {categories.map((category) => (
-              <a className={`category-card ${category.className}`} href={`/?category=${category.name.toLowerCase()}`} key={category.name}>
-                <span>{category.code}</span>
+            {shopCategories.map((category, index) => (
+              <Link className={`category-card ${['hoodies', 'tees', 'bottoms'][index] ?? 'tees'}`} to={`/shop?categorySlug=${encodeURIComponent(category.slug)}`} key={category.id}>
+                <span>{String(index + 1).padStart(2, '0')}</span>
                 <h3>{category.name}</h3>
                 <ArrowRight aria-hidden="true" />
-              </a>
+              </Link>
             ))}
           </div>
-        </section>
+        </section>}
 
         <section className="products-section" id="new-drop">
           <div className="section-heading section-heading-row">
@@ -63,7 +60,7 @@ export function HomePage() {
               <p>Recently released</p>
               <h2>NEW DROP</h2>
             </div>
-            <a href="/?sort=newest">View collection <ArrowRight aria-hidden="true" /></a>
+            <Link to="/shop?sort=newest">View collection <ArrowRight aria-hidden="true" /></Link>
           </div>
 
           {products.isPending ? (

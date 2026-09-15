@@ -44,6 +44,8 @@ export type OrderItem = {
   qty: number
   price: string
   lineTotal: string
+  currentStockQty: number
+  stockAvailable: boolean
 }
 
 export type Payment = {
@@ -63,12 +65,26 @@ export type Order = {
   orderNumber: string
   status: 'pending' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled'
   paymentStatus: 'unpaid' | 'paid' | 'failed'
+  refundStatus: 'pending' | 'completed' | null
+  refundAmount: string | null
+  refundReason: string | null
+  refundRequestedAt: string | null
+  refundCompletedAt: string | null
   subtotal: string
+  merchandiseDiscount: string
+  membershipDiscountPercent: string
+  membershipTierSnapshot: { name?: string } | null
   shippingFee: string
+  shippingDeliveryFee: string
+  shippingPickupFee: string
   total: string
-  paymentMethod: 'qr'
+  advancePaymentAmount: string
+  codCollectionAmount: string
+  codMerchandiseAdvancePercent: string
+  paymentMethod: 'qr' | 'cod'
   delivery: { name: string; phone: string; fullAddress: string; city: string }
   trackingRef: string | null
+  shipment: { carrier:'nepal_can_move'; carrierOrderId:string|null; bookingStatus:'pending'|'booked'|'failed'; carrierStatus:string|null; events:Array<{event:string;status:string;occurredAt:string|null;receivedAt:string}> } | null
   createdAt: string
   items: OrderItem[]
   payments: Payment[]
@@ -86,7 +102,7 @@ export type PaymentInstructions = {
 }
 
 export type CheckoutResult = {
-  order: Pick<Order, 'id' | 'orderNumber' | 'status' | 'paymentStatus' | 'subtotal' | 'shippingFee' | 'total' | 'createdAt'>
+  order: Pick<Order, 'id' | 'orderNumber' | 'status' | 'paymentStatus' | 'paymentMethod' | 'subtotal' | 'merchandiseDiscount' | 'membershipDiscountPercent' | 'shippingFee' | 'shippingDeliveryFee' | 'shippingPickupFee' | 'total' | 'advancePaymentAmount' | 'codCollectionAmount' | 'codMerchandiseAdvancePercent' | 'createdAt'>
   payment: Pick<Payment, 'id' | 'status' | 'amount' | 'createdAt'>
   paymentInstructions: PaymentInstructions
 }

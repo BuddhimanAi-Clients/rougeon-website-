@@ -1,34 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Heart, LogOut, MapPin, Plus, Star, Trash2 } from 'lucide-react'
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { apiRequest } from '../lib/api'
 import { authClient } from '../lib/auth-client'
 import type { Address, ApiData, WishlistItem } from '../types/commerce'
 
+type MembershipInfo = { eligibleNetSpend: string; tier: { name: string; discountPercent: string; activatedAt: string | null } | null; nextTier: { name: string; remaining: string } | null }
+type CustomerProfileResponse = { fullName: string; normalizedPhone: string; normalizedEmail: string; birthDate: string; preferredCalendar: 'AD'|'BS'; membership?: MembershipInfo } | { complete: false }
+
 export function AccountPage() {
   const { data: session, isPending } = authClient.useSession()
   const [params, setParams] = useSearchParams()
+  const navigate = useNavigate()
+  const user = session?.user as { name?: string; email?: string; phone?: string | null } | undefined
   const tab = params.get('tab') ?? 'addresses'
   const queryClient = useQueryClient()
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [address, setAddress] = useState({ label: '', fullAddress: '', city: '', phone: '', isDefault: false })
+  const [profile, setProfile] = useState({ fullName: '', phone: '', email: '', dobCalendar: 'AD', year: '', month: '', day: '' })
   const addresses = useQuery({ queryKey: ['addresses'], enabled: Boolean(session), queryFn: async () => (await apiRequest<ApiData<Address[]>>('/api/v1/addresses')).data })
   const wishlist = useQuery({ queryKey: ['wishlist'], enabled: Boolean(session), queryFn: async () => (await apiRequest<ApiData<WishlistItem[]>>('/api/v1/wishlist')).data })
+  const customerProfile = useQuery({ queryKey: ['customer-profile'], enabled: Boolean(session), queryFn: () => apiRequest<{data?:CustomerProfileResponse}>('/api/v1/customers/me') })
+  const membership = customerProfile.data?.data && 'fullName' in customerProfile.data.data ? customerProfile.data.data.membership : undefined
+  const returnTo = params.get('returnTo')
+  useEffect(() => { const saved = customerProfile.data?.data; if (!saved || !('fullName' in saved)) return; const [year, month, day] = saved.birthDate.slice(0, 10).split('-'); setProfile({ fullName: saved.fullName, phone: saved.normalizedPhone, email: saved.normalizedEmail, dobCalendar: saved.preferredCalendar, year, month, day }) }, [customerProfile.data])
   const createAddress = useMutation({ mutationFn: () => apiRequest('/api/v1/addresses', { method: 'POST', body: JSON.stringify(address) }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['addresses'] }); setShowAddressForm(false); setAddress({ label: '', fullAddress: '', city: '', phone: '', isDefault: false }); toast.success('Address saved') }, onError: (error) => toast.error(error.message) })
   const deleteAddress = useMutation({ mutationFn: (id: string) => apiRequest(`/api/v1/addresses/${id}`, { method: 'DELETE' }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['addresses'] }), onError: (error) => toast.error(error.message) })
   const makeDefault = useMutation({ mutationFn: (id: string) => apiRequest(`/api/v1/addresses/${id}/default`, { method: 'PATCH' }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['addresses'] }), onError: (error) => toast.error(error.message) })
   const removeWishlist = useMutation({ mutationFn: (id: string) => apiRequest(`/api/v1/wishlist/items/${id}`, { method: 'DELETE' }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['wishlist'] }), onError: (error) => toast.error(error.message) })
+  const saveProfile = useMutation({ mutationFn: () => apiRequest('/api/v1/customers/me', { method: 'PUT', body: JSON.stringify({ fullName: profile.fullName, phone: profile.phone, email: profile.email || user?.email || '', dobCalendar: profile.dobCalendar, dob: { year: Number(profile.year), month: Number(profile.month), day: Number(profile.day) } }) }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['customer-profile'] }); toast.success('Membership profile saved'); if (returnTo) navigate(returnTo) }, onError: (error) => toast.error(error.message) })
 
   if (!isPending && !session) return <Navigate to="/auth/sign-in" state={{ from: '/account' }} replace />
-  const user = session?.user as { name?: string; email?: string; phone?: string | null } | undefined
 
   return (
     <div className="page-shell account-page">
-      <header className="account-head"><div><p>ROGUEON MEMBER</p><h1>{user?.name ?? 'ACCOUNT'}</h1><span>{user?.email}</span></div><button className="outline-button" type="button" onClick={async () => { await authClient.signOut(); window.location.assign('/') }}>Sign out <LogOut /></button></header>
-      <nav className="account-tabs"><button className={tab === 'addresses' ? 'active' : ''} onClick={() => setParams({ tab: 'addresses' })}>Addresses</button><button className={tab === 'wishlist' ? 'active' : ''} onClick={() => setParams({ tab: 'wishlist' })}>Wishlist</button></nav>
-      {tab === 'addresses' ? (
+      <header className="account-head"><div><p>ROGUEON MEMBER</p><h1>{user?.name ?? 'ACCOUNT'}</h1><span>{user?.email}</span>{membership && <small>{membership.tier?.name ?? 'No active tier'} · {membership.tier?.discountPercent ?? '0'}% member discount · NPR {Number(membership.eligibleNetSpend).toLocaleString()} eligible this year</small>}</div><button className="outline-button" type="button" onClick={async () => { await authClient.signOut(); window.location.assign('/') }}>Sign out <LogOut /></button></header>
+      <nav className="account-tabs"><button className={tab === 'profile' ? 'active' : ''} onClick={() => setParams({ tab: 'profile' })}>Membership profile</button><button className={tab === 'addresses' ? 'active' : ''} onClick={() => setParams({ tab: 'addresses' })}>Addresses</button><button className={tab === 'wishlist' ? 'active' : ''} onClick={() => setParams({ tab: 'wishlist' })}>Wishlist</button></nav>
+      {tab === 'profile' ? <section className="account-section"><div className="account-section-head"><div><p>MEMBERSHIP</p><h2>Customer profile</h2></div></div><p>Complete this profile before a Website purchase can earn membership progress or member discounts.</p><form className="address-form" onSubmit={(event)=>{event.preventDefault();saveProfile.mutate()}}><label><span>Full name</span><input required value={profile.fullName} onChange={(event)=>setProfile({...profile,fullName:event.target.value})}/></label><label><span>Phone</span><input required value={profile.phone} onChange={(event)=>setProfile({...profile,phone:event.target.value})}/></label><label className="wide"><span>Verified account email</span><input required readOnly type="email" value={user?.email ?? ''}/></label><label><span>DOB calendar</span><select value={profile.dobCalendar} onChange={(event)=>setProfile({...profile,dobCalendar:event.target.value})}><option value="AD">English Date (AD)</option><option value="BS">Nepali Date (BS)</option></select></label><label><span>Year</span><input required inputMode="numeric" value={profile.year} onChange={(event)=>setProfile({...profile,year:event.target.value})}/></label><label><span>Month</span><input required inputMode="numeric" value={profile.month} onChange={(event)=>setProfile({...profile,month:event.target.value})}/></label><label><span>Day</span><input required inputMode="numeric" value={profile.day} onChange={(event)=>setProfile({...profile,day:event.target.value})}/></label><button className="solid-button" disabled={saveProfile.isPending}>Save membership profile</button></form>{customerProfile.data?.data && 'fullName' in customerProfile.data.data && <small>Saved profile: {customerProfile.data.data.fullName}</small>}</section> : tab === 'addresses' ? (
         <section className="account-section">
           <div className="account-section-head"><div><p>DELIVERY BOOK</p><h2>Saved addresses</h2></div><button className="solid-button" type="button" onClick={() => setShowAddressForm(!showAddressForm)}><Plus /> Add address</button></div>
           {showAddressForm && <form className="address-form" onSubmit={(event) => { event.preventDefault(); createAddress.mutate() }}><label><span>Label</span><input required maxLength={80} placeholder="Home" value={address.label} onChange={(event) => setAddress({ ...address, label: event.target.value })} /></label><label><span>Phone</span><input required minLength={5} maxLength={30} value={address.phone} onChange={(event) => setAddress({ ...address, phone: event.target.value })} /></label><label className="wide"><span>Full address</span><textarea required minLength={5} maxLength={2000} rows={3} value={address.fullAddress} onChange={(event) => setAddress({ ...address, fullAddress: event.target.value })} /></label><label><span>City</span><input required maxLength={120} value={address.city} onChange={(event) => setAddress({ ...address, city: event.target.value })} /></label><label className="checkbox-label"><input type="checkbox" checked={address.isDefault} onChange={(event) => setAddress({ ...address, isDefault: event.target.checked })} /> Make default</label><button className="solid-button" type="submit" disabled={createAddress.isPending}>Save address <ArrowRight /></button></form>}

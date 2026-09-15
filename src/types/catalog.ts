@@ -5,6 +5,7 @@ export type ProductVariant = {
   color: string
   price: string
   available: boolean
+  stockQty: number
 }
 
 export type Product = {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Check, Heart, Minus, Plus, ShieldCheck, ShoppingBag } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -23,18 +23,30 @@ export function ProductDetailPage() {
     queryKey: ['product', slug],
     queryFn: async () => (await apiRequest<ApiData<Product>>(`/api/v1/products/${encodeURIComponent(slug)}`)).data,
   })
-  const selectedVariant = product.data?.variants.find((variant) => variant.id === variantId) ?? product.data?.variants[0]
+  useEffect(() => {
+    if (variantId || !product.data) return
+    // Open with a buyable option selected so the primary action is immediately
+    // understandable; fall back to the first variant only when all are sold out.
+    setVariantId(product.data.variants.find((variant) => variant.available)?.id ?? product.data.variants[0]?.id ?? '')
+  }, [product.data, variantId])
+  // A variant must be chosen deliberately. Falling back to the first variant made
+  // the visible selection and the item actually added to the bag disagree.
+  const selectedVariant = product.data?.variants.find((variant) => variant.id === variantId)
 
   const addToCart = useMutation({
-    mutationFn: async () => (await apiRequest<ApiData<Cart>>('/api/v1/cart/items', { method: 'POST', body: JSON.stringify({ variantId: selectedVariant!.id, qty: quantity }) })).data,
+    mutationFn: async () => {
+      if (!selectedVariant) throw new Error('Select a variant before adding this item to your bag')
+      return (await apiRequest<ApiData<Cart>>('/api/v1/cart/items', { method: 'POST', body: JSON.stringify({ variantId: selectedVariant.id, qty: quantity }) })).data
+    },
     onSuccess: (cart) => {
       queryClient.setQueryData(cartQueryKey, cart)
       toast.success('Added to your bag')
+      navigate('/cart')
     },
     onError: (error) => toast.error(error.message),
   })
   const addToWishlist = useMutation({
-    mutationFn: () => apiRequest('/api/v1/wishlist/items', { method: 'POST', body: JSON.stringify({ variantId: selectedVariant!.id }) }),
+    mutationFn: () => selectedVariant ? apiRequest('/api/v1/wishlist/items', { method: 'POST', body: JSON.stringify({ variantId: selectedVariant.id }) }) : Promise.reject(new Error('Select a variant before saving this item')),
     onSuccess: () => toast.success('Saved to wishlist'),
     onError: (error) => toast.error(error.message),
   })
@@ -66,11 +78,11 @@ export function ProductDetailPage() {
         </fieldset>
 
         <div className="purchase-actions">
-          <div className="quantity-stepper"><button type="button" aria-label="Decrease quantity" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus /></button><span>{quantity}</span><button type="button" aria-label="Increase quantity" onClick={() => setQuantity(Math.min(999, quantity + 1))}><Plus /></button></div>
+          <div className="quantity-stepper"><button type="button" aria-label="Decrease quantity" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus /></button><span>{quantity}</span><button type="button" aria-label="Increase quantity" disabled={!selectedVariant} onClick={() => { if (selectedVariant && quantity >= selectedVariant.stockQty) toast.error(`Only ${selectedVariant.stockQty} units are available`); else setQuantity(quantity + 1) }}><Plus /></button></div>
           <button className="solid-button" type="button" disabled={!selectedVariant?.available || addToCart.isPending} onClick={() => addToCart.mutate()}><ShoppingBag /> {addToCart.isPending ? 'Adding…' : 'Add to bag'}</button>
           <button className="square-button" type="button" aria-label="Save to wishlist" disabled={!selectedVariant?.available || addToWishlist.isPending} onClick={() => session ? addToWishlist.mutate() : navigate('/auth/sign-in')}><Heart /></button>
         </div>
-        <div className="purchase-note"><ShieldCheck /><span><strong>Server verified</strong>Price and stock are checked again before checkout.</span></div>
+        <div className="purchase-note"><ShieldCheck /><span><strong>Server verified</strong>{selectedVariant ? `${selectedVariant.stockQty} units currently available. Stock is checked again before checkout.` : 'Price and stock are checked again before checkout.'}</span></div>
       </aside>
     </div>
   )

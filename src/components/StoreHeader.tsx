@@ -25,6 +25,7 @@ export function StoreHeader() {
         <nav className="desktop-nav" aria-label="Primary navigation">
           <NavLink to="/shop?sort=newest">New drop</NavLink>
           <NavLink to="/shop">Shop</NavLink>
+          <NavLink to="/orders">Orders</NavLink>
           <Link to="/#manifesto">Archive</Link>
         </nav>
         <div className="header-actions">
