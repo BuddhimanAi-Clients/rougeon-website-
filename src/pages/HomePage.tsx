@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import type { CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, ArrowRight, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -7,7 +9,36 @@ import type { PaginatedProducts } from '../types/catalog'
 import type { ApiData, Category } from '../types/commerce'
 import landingVideo from '../assets/landing_page_video.mp4'
 
+function useScrollReveal() {
+  useEffect(() => {
+    const elements = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'))
+    if (!elements.length) return
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reducedMotion) {
+      elements.forEach((element) => element.classList.add('is-visible'))
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          observer.unobserve(entry.target)
+        })
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.16 },
+    )
+
+    elements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [])
+}
+
 export function HomePage() {
+  useScrollReveal()
+
   const products = useQuery({
     queryKey: ['products', 'newest'],
     queryFn: () =>
@@ -22,30 +53,32 @@ export function HomePage() {
   return (
     <>
         <section className="hero-section">
-          <video className="hero-video" autoPlay muted loop playsInline preload="metadata" aria-hidden="true"><source src={landingVideo} type="video/mp4" /></video>
+          <div className="hero-media" aria-hidden="true">
+            <video className="hero-video" autoPlay muted loop playsInline preload="metadata"><source src={landingVideo} type="video/mp4" /></video>
+          </div>
           <div className="hero-video-overlay" aria-hidden="true" />
           <div className="hero-noise" aria-hidden="true" />
-          <div className="hero-copy">
-            <p className="eyebrow"><Star aria-hidden="true" /> RGN / DROP 001</p>
-            <h1>BREAK RULES.<br />NOT CHARACTER.</h1>
+          <div className="hero-copy" data-reveal="hero">
+            <p className="eyebrow"><Star aria-hidden="true" /> New season / Built for movement</p>
+            <h1>STAND OUT.<br />STAY SHARP.</h1>
             <p className="hero-note">
-              Uniforms for the independently minded. Designed in Nepal for wherever you move next.
+              Clean streetwear with bold proportion, sharp graphics and everyday confidence. Cut in Nepal for city days, late nights and everything after.
             </p>
-            <a className="primary-cta" href="#new-drop">
-              Shop the drop <ArrowDown aria-hidden="true" />
+            <a className="primary-cta" href="#new-arrivals">
+              Shop collection <ArrowDown aria-hidden="true" />
             </a>
           </div>
-          <div className="hero-index" aria-hidden="true">EST. 2026 — KTM</div>
+          <div className="hero-index" aria-hidden="true">EST. 2026 / KTM</div>
         </section>
 
         {shopCategories.length > 0 && <section className="category-section" id="categories">
-          <div className="section-heading">
+          <div className="section-heading" data-reveal>
             <p>Shop by category</p>
             <h2>EXPLORE THE COLLECTION</h2>
           </div>
           <div className="category-grid">
             {shopCategories.map((category, index) => (
-              <Link className={`category-card ${['hoodies', 'tees', 'bottoms'][index] ?? 'tees'}`} to={`/shop?categorySlug=${encodeURIComponent(category.slug)}`} key={category.id}>
+              <Link className={`category-card ${['hoodies', 'tees', 'bottoms'][index] ?? 'tees'}`} style={{ '--reveal-delay': `${index * 90}ms` } as CSSProperties} data-reveal to={`/shop?categorySlug=${encodeURIComponent(category.slug)}`} key={category.id}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <h3>{category.name}</h3>
                 <ArrowRight aria-hidden="true" />
@@ -54,11 +87,11 @@ export function HomePage() {
           </div>
         </section>}
 
-        <section className="products-section" id="new-drop">
-          <div className="section-heading section-heading-row">
+        <section className="products-section" id="new-arrivals">
+          <div className="section-heading section-heading-row" data-reveal>
             <div>
               <p>Recently released</p>
-              <h2>NEW DROP</h2>
+              <h2>NEW ARRIVALS</h2>
             </div>
             <Link to="/shop?sort=newest">View collection <ArrowRight aria-hidden="true" /></Link>
           </div>
@@ -77,30 +110,32 @@ export function HomePage() {
             </div>
           ) : products.data.data.length === 0 ? (
             <div className="collection-state">
-              <p>THE NEXT DROP IS LOADING</p>
+              <p>NEW ARRIVALS ARE LOADING</p>
               <span>Active products will appear here as soon as they are published.</span>
             </div>
           ) : (
             <div className="product-grid">
-              {products.data.data.map((product) => (
-                <ProductCard product={product} key={product.id} />
+              {products.data.data.map((product, index) => (
+                <div className="reveal-product" style={{ '--reveal-delay': `${index * 80}ms` } as CSSProperties} data-reveal key={product.id}>
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           )}
         </section>
 
-        <section className="manifesto-section" id="manifesto">
+        <section className="manifesto-section" id="manifesto" data-reveal>
           <div className="manifesto-photo" aria-hidden="true">
             <span>RGN</span>
           </div>
-          <div className="manifesto-copy">
+          <div className="manifesto-copy" data-reveal>
             <p className="eyebrow">THE ROGUEON SYNDICATE</p>
             <h2>NOT MADE<br />TO BLEND IN.</h2>
             <p>
               ROGUEON is an independent clothing project built around attitude, restraint and useful form.
               No costumes. No borrowed identity. Just pieces designed to become yours.
             </p>
-            <a href="#new-drop">Enter the archive <ArrowRight aria-hidden="true" /></a>
+            <a href="#new-arrivals">Enter the archive <ArrowRight aria-hidden="true" /></a>
           </div>
         </section>
     </>
