@@ -4,11 +4,13 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { apiRequest } from '../lib/api'
+import { usePageTitle } from '../hooks/usePageTitle'
 import type { ApiData, CheckoutResult, Order, PaymentInstructions } from '../types/commerce'
 
 const money = new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 })
 
 export function PaymentPage() {
+  usePageTitle('Payment')
   const { orderId = '' } = useParams()
   const location = useLocation()
   const queryClient = useQueryClient()

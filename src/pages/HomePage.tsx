@@ -7,11 +7,14 @@ import { ProductCard } from '../components/ProductCard'
 import { apiRequest } from '../lib/api'
 import type { PaginatedProducts } from '../types/catalog'
 import type { ApiData, Category } from '../types/commerce'
+import { usePageTitle } from '../hooks/usePageTitle'
 import landingVideo from '../assets/landing_page_video.mp4'
 
-function useScrollReveal() {
+// `contentKey` changes when API data arrives, so sections rendered after the
+// first paint (categories, products) are observed too instead of staying hidden.
+function useScrollReveal(contentKey: string) {
   useEffect(() => {
-    const elements = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'))
+    const elements = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-visible)'))
     if (!elements.length) return
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -33,12 +36,11 @@ function useScrollReveal() {
 
     elements.forEach((element) => observer.observe(element))
     return () => observer.disconnect()
-  }, [])
+  }, [contentKey])
 }
 
 export function HomePage() {
-  useScrollReveal()
-
+  usePageTitle()
   const products = useQuery({
     queryKey: ['products', 'newest'],
     queryFn: () =>
@@ -48,6 +50,7 @@ export function HomePage() {
     queryKey: ['categories'],
     queryFn: async () => (await apiRequest<ApiData<Category[]>>('/api/v1/categories')).data,
   })
+  useScrollReveal(`${products.status}:${products.dataUpdatedAt}:${categories.status}:${categories.dataUpdatedAt}`)
   const shopCategories = categories.data?.flatMap((category) => category.children.length ? category.children : [category]).slice(0, 3) ?? []
 
   return (
@@ -60,7 +63,7 @@ export function HomePage() {
           <div className="hero-noise" aria-hidden="true" />
           <div className="hero-copy" data-reveal="hero">
             <p className="eyebrow"><Star aria-hidden="true" /> New season / Built for movement</p>
-            <h1>STAND OUT.<br />STAY SHARP.</h1>
+            <h1>BREAK <span aria-hidden="true">★</span> RULES <span aria-hidden="true">★</span> REPEAT</h1>
             <p className="hero-note">
               Clean streetwear with bold proportion, sharp graphics and everyday confidence. Cut in Nepal for city days, late nights and everything after.
             </p>
@@ -93,7 +96,7 @@ export function HomePage() {
               <p>Recently released</p>
               <h2>NEW ARRIVALS</h2>
             </div>
-            <Link to="/shop?sort=newest">View collection <ArrowRight aria-hidden="true" /></Link>
+            <Link to="/shop">View collection <ArrowRight aria-hidden="true" /></Link>
           </div>
 
           {products.isPending ? (
@@ -104,14 +107,14 @@ export function HomePage() {
             </div>
           ) : products.isError ? (
             <div className="collection-state">
-              <p>THE RACK IS OFFLINE</p>
-              <span>Start the backend to load the current collection.</span>
+              <p>WE COULDN'T LOAD THE COLLECTION</p>
+              <span>Please check your connection and try again.</span>
               <button type="button" onClick={() => products.refetch()}>Try again</button>
             </div>
           ) : products.data.data.length === 0 ? (
             <div className="collection-state">
-              <p>NEW ARRIVALS ARE LOADING</p>
-              <span>Active products will appear here as soon as they are published.</span>
+              <p>NEW PIECES ARE ON THE WAY</p>
+              <span>Check back soon for the next drop.</span>
             </div>
           ) : (
             <div className="product-grid">
@@ -135,7 +138,7 @@ export function HomePage() {
               ROGUEON is an independent clothing project built around attitude, restraint and useful form.
               No costumes. No borrowed identity. Just pieces designed to become yours.
             </p>
-            <a href="#new-arrivals">Enter the archive <ArrowRight aria-hidden="true" /></a>
+            <Link to="/shop">Shop the collection <ArrowRight aria-hidden="true" /></Link>
           </div>
         </section>
     </>

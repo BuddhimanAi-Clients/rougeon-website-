@@ -19,13 +19,12 @@ export function StoreHeader() {
           ROGUEON<span aria-hidden="true">®</span>
         </Link>
         <nav className="desktop-nav" aria-label="Primary navigation">
-          <NavLink to="/shop?sort=newest">Latest</NavLink>
           <NavLink to="/shop">Shop</NavLink>
           <NavLink to="/orders">Orders</NavLink>
-          <NavLink to="/#manifesto">Archive</NavLink>
+          <Link to="/#manifesto">About</Link>
         </nav>
         <div className="header-actions">
-          <Link className="icon-button search-button" to="/shop" aria-label="Search">
+          <Link className="icon-button search-button" to="/shop#search" aria-label="Search products">
             <Search aria-hidden="true" />
           </Link>
           <Link className="icon-button desktop-action" to={session ? '/account?tab=wishlist' : '/auth/sign-in'} aria-label="Wishlist">
@@ -47,9 +46,9 @@ export function StoreHeader() {
           <button className="icon-button" type="button" aria-label="Close menu" onClick={() => setMenuOpen(false)}><X /></button>
         </div>
         <nav aria-label="Mobile navigation">
-          <Link to="/shop?sort=newest" onClick={() => setMenuOpen(false)}>Latest <span>01</span></Link>
-          <Link to="/shop" onClick={() => setMenuOpen(false)}>Shop all <span>02</span></Link>
-          <Link to="/orders" onClick={() => setMenuOpen(false)}>Orders <span>03</span></Link>
+          <Link to="/shop" onClick={() => setMenuOpen(false)}>Shop all <span>01</span></Link>
+          <Link to="/orders" onClick={() => setMenuOpen(false)}>Orders <span>02</span></Link>
+          <Link to="/#manifesto" onClick={() => setMenuOpen(false)}>About <span>03</span></Link>
           <Link to={session ? '/account' : '/auth/sign-in'} onClick={() => setMenuOpen(false)}>{session ? 'Account' : 'Sign in'} <span>04</span></Link>
         </nav>
         {session && (

@@ -2,11 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ExternalLink, MapPin, PackageCheck } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { apiRequest } from '../lib/api'
+import { usePageTitle } from '../hooks/usePageTitle'
 import type { ApiData, Order } from '../types/commerce'
 
 const money = new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 })
 
 export function OrderDetailPage() {
+  usePageTitle('Order details')
   const { orderId = '' } = useParams()
   const order = useQuery({ queryKey: ['order', orderId], refetchInterval: 30_000, queryFn: async () => (await apiRequest<ApiData<Order>>('/api/v1/orders/' + orderId)).data })
   if (order.isPending) return <div className="page-loading">Loading order…</div>

@@ -3,12 +3,14 @@ import { ArrowRight, PackageOpen } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { apiRequest } from '../lib/api'
 import { authClient } from '../lib/auth-client'
+import { usePageTitle } from '../hooks/usePageTitle'
 import type { Order } from '../types/commerce'
 
 type OrderList = { data: Order[]; pagination: { page: number; limit: number; total: number; totalPages: number } }
 const money = new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 })
 
 export function OrdersPage() {
+  usePageTitle('Your orders')
   const { data: session } = authClient.useSession()
   const [params, setParams] = useSearchParams()
   const orders = useQuery({

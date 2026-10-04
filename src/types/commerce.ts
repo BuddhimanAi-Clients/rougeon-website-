@@ -7,7 +7,7 @@ export type CartItem = {
   qty: number
   lineTotal: string
   variant: ProductVariant
-  product: Pick<Product, 'id' | 'name' | 'slug' | 'images' | 'category'>
+  product: Pick<Product, 'id' | 'name' | 'slug' | 'images' | 'category'> & { membershipDiscountEligible?: boolean }
 }
 
 export type Cart = {
