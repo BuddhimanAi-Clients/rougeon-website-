@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { toast } from 'sonner'
 import { apiRequest } from '../lib/api'
 import { authClient } from '../lib/auth-client'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 function isValidAdDate(year: string, month: string, day: string) {
   const parts = [Number(year), Number(month), Number(day)]
@@ -20,6 +21,7 @@ export function AuthPage() {
   const signUp = location.pathname.endsWith('sign-up')
   const reset = location.pathname.endsWith('reset-password')
   const verificationSuccess = !signUp && !reset && query.get('verified') === '1'
+  usePageTitle(reset ? 'Reset password' : signUp ? 'Create account' : 'Sign in')
   const [showPassword, setShowPassword] = useState(false)
   const [pending, setPending] = useState(false)
   const [emailAction, setEmailAction] = useState<'reset' | 'verify' | null>(null)

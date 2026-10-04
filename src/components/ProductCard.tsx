@@ -21,9 +21,7 @@ export function ProductCard({ product }: { product: Product }) {
             <span>R</span>
           </div>
         )}
-        <span className={`availability ${product.available ? '' : 'sold-out'}`}>
-          {product.available ? 'Available' : 'Sold out'}
-        </span>
+        {!product.available && <span className="availability sold-out">Sold out</span>}
       </Link>
       <div className="product-meta">
         <div>

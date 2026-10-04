@@ -7,6 +7,7 @@ import { useCart } from '../hooks/useCart'
 import { apiRequest } from '../lib/api'
 import { authClient } from '../lib/auth-client'
 import type { Address, ApiData, CheckoutResult } from '../types/commerce'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 type MembershipInfo = { eligibleNetSpend: string; tier: { name: string; discountPercent: string; activatedAt: string | null } | null; nextTier: { name: string; remaining: string } | null }
 type MembershipProfile = { complete: false; membership?: MembershipInfo } | { id: string; fullName: string; normalizedPhone: string; normalizedEmail: string; birthDate: string; preferredCalendar: 'AD' | 'BS'; membership?: MembershipInfo }
@@ -14,6 +15,7 @@ type MembershipProfile = { complete: false; membership?: MembershipInfo } | { id
 const money = new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 })
 
 export function CheckoutPage() {
+  usePageTitle('Checkout')
   const navigate = useNavigate()
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const cart = useCart()
@@ -31,7 +33,9 @@ export function CheckoutPage() {
   const selectedAddressId = addressId || addresses.data?.find((address) => address.isDefault)?.id || addresses.data?.[0]?.id || ''
   const membership = membershipProfile.data?.data && 'membership' in membershipProfile.data.data ? membershipProfile.data.data.membership : undefined
   const membershipRate = Number(membership?.tier?.discountPercent ?? 0)
-  const membershipDiscountPreview = Number(cart.data?.subtotal ?? 0) * membershipRate / 100
+  // Products an administrator excluded from membership discounts stay at full price.
+  const membershipEligibleSubtotal = (cart.data?.items ?? []).reduce((sum, item) => item.product.membershipDiscountEligible === false ? sum : sum + Number(item.lineTotal), 0)
+  const membershipDiscountPreview = membershipEligibleSubtotal * membershipRate / 100
 
   const checkout = useMutation({
     mutationFn: async () => (await apiRequest<ApiData<CheckoutResult>>('/api/v1/checkout', {
@@ -55,7 +59,7 @@ export function CheckoutPage() {
   return (
     <div className="page-shell checkout-page">
       <Link className="back-link" to="/cart"><ArrowLeft /> Return to bag</Link>
-      <header className="checkout-heading"><p>SECURE CHECKOUT / FULL CART</p><h1>DELIVERY.<br />THEN PAYMENT.</h1></header>
+      <header className="checkout-heading"><p>SECURE CHECKOUT</p><h1>DELIVERY.<br />THEN PAYMENT.</h1></header>
       <form className="checkout-layout" onSubmit={submit}>
         <section className="checkout-form-panel">
           <div className="checkout-step-title"><span>01</span><div><h2>Delivery details</h2><p>{session ? 'Choose one of your saved addresses.' : 'Guest details are used for this order only.'}</p></div></div>
@@ -81,15 +85,15 @@ export function CheckoutPage() {
           )}
           {!session && <p className="checkout-login-note">Already have saved details? <Link to="/auth/sign-in" state={{ from: '/checkout' }}>Sign in before checkout</Link>.</p>}
           {session && membershipProfile.data?.data && !('id' in membershipProfile.data.data) && <div className="inline-empty membership-profile-callout"><p><strong>One quick step before payment.</strong><br/>Add your name, phone and date of birth so this purchase can earn membership progress.</p><Link className="solid-button" to="/account?tab=profile&returnTo=%2Fcheckout">Complete profile <ArrowRight /></Link></div>}
-          <div className="checkout-step-title second"><span>02</span><div><h2>Static QR payment</h2><p>The exact QR, amount and payment reference appear after the order is created.</p></div></div>
-          <div className="payment-method-choice" role="radiogroup" aria-label="Payment method"><label className={paymentMethod === 'qr' ? 'selected' : ''}><input type="radio" name="paymentMethod" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} /><strong>Pay in full online</strong><span>Pay the complete order total by QR.</span></label><label className={paymentMethod === 'cod' ? 'selected' : ''}><input type="radio" name="paymentMethod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} /><strong>Cash on delivery</strong><span>Pay shipping now by QR. Any configured merchandise advance is shown before payment; NCM collects the balance on delivery.</span></label></div>
+          <div className="checkout-step-title second"><span>02</span><div><h2>Payment method</h2><p>You will see the payment QR and the exact amount on the next step.</p></div></div>
+          <div className="payment-method-choice" role="radiogroup" aria-label="Payment method"><label className={paymentMethod === 'qr' ? 'selected' : ''}><input type="radio" name="paymentMethod" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} /><strong>Pay in full online</strong><span>Pay the complete order total by QR.</span></label><label className={paymentMethod === 'cod' ? 'selected' : ''}><input type="radio" name="paymentMethod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} /><strong>Cash on delivery</strong><span>Pay the delivery fee and any advance now by QR. Pay the rest to the courier when your order arrives.</span></label></div>
         </section>
         <aside className="order-summary checkout-summary">
           <p className="eyebrow">YOUR ORDER</p>
-          <div className="checkout-lines">{cart.data?.items.map((item) => <div key={item.id}><span>{item.qty} × {item.product.name}<small>{item.variant.size} / {item.variant.color}</small></span><strong>{money.format(Number(item.lineTotal))}</strong></div>)}</div>
-          <dl><div><dt>Subtotal</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0))}</dd></div>{session && membership && <><div><dt>Membership</dt><dd>{membership.tier?.name ?? 'No membership'} · {membership.tier?.discountPercent ?? '0'}%</dd></div>{membershipRate > 0 && <><div><dt>Member discount (estimated)</dt><dd>−{money.format(membershipDiscountPreview)}</dd></div><div><dt>Merchandise after discount</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0) - membershipDiscountPreview)}</dd></div></>}<div><dt>Eligible this year</dt><dd>{money.format(Number(membership.eligibleNetSpend ?? 0))}</dd></div>{membership.nextTier && <div><dt>Next tier</dt><dd>{membership.nextTier.name}: {money.format(Number(membership.nextTier.remaining))} to go</dd></div>}</>}<div><dt>Shipping</dt><dd>Server calculated</dd></div></dl>
-          <button className="solid-button" type="submit" disabled={checkout.isPending || (Boolean(session) && (!selectedAddressId || (membershipProfile.data?.data !== undefined && !('id' in membershipProfile.data.data))))}>{checkout.isPending ? 'Creating order…' : paymentMethod === 'cod' ? 'Continue to COD advance payment' : 'Create order & view QR'} <ArrowRight /></button>
-          <small>Submitting consumes the full cart once. Stock is validated now and deducted only after Admin payment confirmation.</small>
+          <div className="checkout-lines">{cart.data?.items.map((item) => <div key={item.id}><span>{item.qty} × {item.product.name}<small>{item.variant.size} / {item.variant.color}{membershipRate > 0 && item.product.membershipDiscountEligible === false ? ' · no member discount' : ''}</small></span><strong>{money.format(Number(item.lineTotal))}</strong></div>)}</div>
+          <dl><div><dt>Subtotal</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0))}</dd></div>{session && membership && <><div><dt>Membership</dt><dd>{membership.tier?.name ?? 'No membership'} · {membership.tier?.discountPercent ?? '0'}%</dd></div>{membershipDiscountPreview > 0 && <><div><dt>Member discount (estimated)</dt><dd>−{money.format(membershipDiscountPreview)}</dd></div><div><dt>Merchandise after discount</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0) - membershipDiscountPreview)}</dd></div></>}<div><dt>Eligible this year</dt><dd>{money.format(Number(membership.eligibleNetSpend ?? 0))}</dd></div>{membership.nextTier && <div><dt>Next tier</dt><dd>{membership.nextTier.name}: {money.format(Number(membership.nextTier.remaining))} to go</dd></div>}</>}<div><dt>Delivery</dt><dd>Shown at next step</dd></div></dl>
+          <button className="solid-button" type="submit" disabled={checkout.isPending || (Boolean(session) && (!selectedAddressId || (membershipProfile.data?.data !== undefined && !('id' in membershipProfile.data.data))))}>{checkout.isPending ? 'Placing order…' : paymentMethod === 'cod' ? 'Place order & pay advance' : 'Place order & pay'} <ArrowRight /></button>
+          <small>Your order is confirmed once we verify your payment.</small>
         </aside>
       </form>
       {guestWarning && <div className="guest-membership-warning" role="dialog" aria-modal="true" aria-labelledby="guest-membership-title"><section><p>ROGUEON MEMBERSHIP</p><h2 id="guest-membership-title">Continue as guest?</h2><span>Guest purchases do not earn ROGUEON membership progress or member discounts. Sign in or create an account to unlock future rewards.</span><div><button className="outline-button" type="button" onClick={() => navigate('/auth/sign-in', { state: { from: '/checkout' } })}>Sign in / Create account</button><button className="solid-button" type="button" onClick={() => { setGuestConfirmed(true); setGuestWarning(false) }}>Continue as guest</button></div></section></div>}

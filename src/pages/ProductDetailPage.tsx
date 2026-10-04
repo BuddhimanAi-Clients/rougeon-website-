@@ -8,6 +8,7 @@ import { apiRequest } from '../lib/api'
 import { authClient } from '../lib/auth-client'
 import type { Product } from '../types/catalog'
 import type { ApiData, Cart } from '../types/commerce'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const money = new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 })
 
@@ -32,6 +33,7 @@ export function ProductDetailPage() {
   // A variant must be chosen deliberately. Falling back to the first variant made
   // the visible selection and the item actually added to the bag disagree.
   const selectedVariant = product.data?.variants.find((variant) => variant.id === variantId)
+  usePageTitle(product.data?.name ?? 'Product')
 
   const addToCart = useMutation({
     mutationFn: async () => {
@@ -40,8 +42,8 @@ export function ProductDetailPage() {
     },
     onSuccess: (cart) => {
       queryClient.setQueryData(cartQueryKey, cart)
-      toast.success('Added to your bag')
-      navigate('/cart')
+      // Stay on the product so the customer can keep browsing; the bag is one tap away.
+      toast.success('Added to your bag', { action: { label: 'View bag', onClick: () => navigate('/cart') } })
     },
     onError: (error) => toast.error(error.message),
   })
@@ -63,13 +65,13 @@ export function ProductDetailPage() {
       </div>
       <aside className="product-purchase">
         <Link className="back-link" to="/shop"><ArrowLeft /> Back to shop</Link>
-        <p className="eyebrow">{product.data.category.name} / {selectedVariant?.sku}</p>
+        <p className="eyebrow">{product.data.category.name}</p>
         <h1>{product.data.name}</h1>
         <p className="detail-price">{selectedVariant ? money.format(Number(selectedVariant.price)) : '—'}</p>
         <p className="detail-description">{product.data.description}</p>
 
         <fieldset className="variant-picker">
-          <legend>Select variant</legend>
+          <legend>Select size</legend>
           <div>{product.data.variants.map((variant) => (
             <button className={(selectedVariant?.id === variant.id ? 'selected ' : '') + (!variant.available ? 'unavailable' : '')} type="button" key={variant.id} disabled={!variant.available} onClick={() => setVariantId(variant.id)}>
               <span>{variant.size}</span><small>{variant.color}</small>{selectedVariant?.id === variant.id && <Check />}
@@ -82,7 +84,7 @@ export function ProductDetailPage() {
           <button className="solid-button" type="button" disabled={!selectedVariant?.available || addToCart.isPending} onClick={() => addToCart.mutate()}><ShoppingBag /> {addToCart.isPending ? 'Adding…' : 'Add to bag'}</button>
           <button className="square-button" type="button" aria-label="Save to wishlist" disabled={!selectedVariant?.available || addToWishlist.isPending} onClick={() => session ? addToWishlist.mutate() : navigate('/auth/sign-in')}><Heart /></button>
         </div>
-        <div className="purchase-note"><ShieldCheck /><span><strong>Server verified</strong>{selectedVariant ? `${selectedVariant.stockQty} units currently available. Stock is checked again before checkout.` : 'Price and stock are checked again before checkout.'}</span></div>
+        <div className="purchase-note"><ShieldCheck /><span><strong>{!selectedVariant ? 'Choose a size' : !selectedVariant.available ? 'Sold out' : selectedVariant.stockQty <= 5 ? `Only ${selectedVariant.stockQty} left` : 'In stock'}</strong>Delivery across Nepal. Pay in full by QR, or choose cash on delivery at checkout.</span></div>
       </aside>
     </div>
   )
