@@ -63,7 +63,7 @@ export function CartPage() {
           <aside className="order-summary">
             <p className="eyebrow">ORDER SUMMARY</p>
             <dl><div><dt>Subtotal</dt><dd>{money.format(Number(cart.data.subtotal))}</dd></div><div><dt>Shipping</dt><dd>Calculated at checkout</dd></div></dl>
-            <div className="summary-total"><span>Subtotal</span><strong>{money.format(Number(cart.data.subtotal))}</strong></div>
+            <div className="summary-total"><span>Total before delivery</span><strong>{money.format(Number(cart.data.subtotal))}</strong></div>
             <Link className="solid-button" to="/checkout">Continue to checkout <ArrowRight /></Link>
             <small>The delivery fee is added at checkout.</small>
           </aside>

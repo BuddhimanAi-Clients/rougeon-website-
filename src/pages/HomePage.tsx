@@ -10,6 +10,7 @@ import type { PaginatedProducts } from '../types/catalog'
 import type { ApiData, Category } from '../types/commerce'
 import { usePageTitle } from '../hooks/usePageTitle'
 import landingVideo from '../assets/landing_page_video.mp4'
+import manifestoPhoto from '../assets/campaign/street.jpg'
 
 // `contentKey` changes when API data arrives, so sections rendered after the
 // first paint (categories, products) are observed too instead of staying hidden.
@@ -64,7 +65,7 @@ export function HomePage() {
           <div className="hero-noise" aria-hidden="true" />
           <div className="hero-copy" data-reveal="hero">
             <p className="eyebrow"><Star aria-hidden="true" /> New season / Built for movement</p>
-            <h1>BREAK <span aria-hidden="true">★</span> RULES <span aria-hidden="true">★</span> REPEAT</h1>
+            <h1><b>BREAK <span aria-hidden="true">★</span></b> <b>RULES <span aria-hidden="true">★</span></b> <b>REPEAT</b></h1>
             <p className="hero-note">
               Clean streetwear with bold proportion, sharp graphics and everyday confidence. Cut in Nepal for city days, late nights and everything after.
             </p>
@@ -122,7 +123,7 @@ export function HomePage() {
 
         <section className="manifesto-section" id="manifesto" data-reveal>
           <div className="manifesto-photo" aria-hidden="true">
-            <span>RGN</span>
+            <img src={manifestoPhoto} alt="" loading="lazy" />
           </div>
           <div className="manifesto-copy" data-reveal>
             <p className="eyebrow">THE ROGUEON SYNDICATE</p>
