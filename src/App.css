@@ -639,3 +639,31 @@
 
 /* Brand mark: the star takes the colour of the text beside it. */
 .brand-star{display:inline-block;flex:none;width:1.35em;height:1.35em;margin-right:.22em;vertical-align:-.32em;background:currentColor;-webkit-mask:url(/brand/star.png) center/contain no-repeat;mask:url(/brand/star.png) center/contain no-repeat}
+
+/* Category tiles keep one modest height however many categories exist. */
+.category-tile { aspect-ratio: auto; height: clamp(260px, 28vw, 400px); max-height: none; }
+@media (max-width: 900px) {
+  .category-tile { height: auto; aspect-ratio: 4 / 5; }
+  .category-tile:last-child:nth-child(odd) { aspect-ratio: 16 / 9; }
+}
+
+/* Brand story uses a campaign photo. */
+.manifesto-photo { position: relative; background: #1a1a1d; }
+.manifesto-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+
+/* Phones: the hero copy sits below the film instead of over its caption. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .hero-copy { margin-top: 0; padding-top: 24px; }
+}
+/* Phones: shorter page banners and headings that never touch the edge. */
+@media (max-width: 760px) {
+  .page-hero { padding-top: 40px; padding-bottom: 28px; }
+  .page-hero.compact { min-height: 0; }
+  .page-hero h1, .checkout-heading h1, .payment-heading h1, .order-detail-head h1, .account-head h1, .auth-panel h1 { font-size: clamp(36px, 11.5vw, 56px); overflow-wrap: anywhere; }
+  .auth-art { min-height: 132px; }
+  .auth-art span { font-size: 30vw; }
+  .manifesto-photo { min-height: 0; aspect-ratio: 4 / 5; }
+}
+/* Tagline always breaks as three lines, never mid-phrase. */
+.hero-copy h1 b { display: block; font-weight: inherit; white-space: nowrap; }
+.hero-copy h1 { max-width: none; }
