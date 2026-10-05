@@ -53,7 +53,7 @@ export function HomePage() {
     queryFn: async () => (await apiRequest<ApiData<Category[]>>('/api/v1/categories')).data,
   })
   useScrollReveal(`${products.status}:${products.dataUpdatedAt}:${categories.status}:${categories.dataUpdatedAt}`)
-  const shopCategories = categories.data?.flatMap((category) => category.children.length ? category.children : [category]).slice(0, 3) ?? []
+  const shopCategories = categories.data?.flatMap((category) => category.children.length ? category.children : [category]) ?? []
 
   return (
     <>
@@ -77,10 +77,6 @@ export function HomePage() {
         </section>
 
         {shopCategories.length > 0 && <section className="category-section" id="categories">
-          <div className="section-heading" data-reveal>
-            <p>The collection</p>
-            <h2>SHOP BY CATEGORY</h2>
-          </div>
           <CategoryTiles categories={shopCategories} />
         </section>}
 
@@ -90,7 +86,7 @@ export function HomePage() {
               <p>Recently released</p>
               <h2>NEW ARRIVALS</h2>
             </div>
-            <Link to="/shop">View collection <ArrowRight aria-hidden="true" /></Link>
+            <Link to="/shop">View all <ArrowRight aria-hidden="true" /></Link>
           </div>
 
           {products.isPending ? (
