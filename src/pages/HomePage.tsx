@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, ArrowRight, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { CategoryTiles } from '../components/CategoryTiles'
 import { ProductCard } from '../components/ProductCard'
 import { apiRequest } from '../lib/api'
 import type { PaginatedProducts } from '../types/catalog'
@@ -76,18 +77,10 @@ export function HomePage() {
 
         {shopCategories.length > 0 && <section className="category-section" id="categories">
           <div className="section-heading" data-reveal>
-            <p>Shop by category</p>
-            <h2>EXPLORE THE COLLECTION</h2>
+            <p>The collection</p>
+            <h2>SHOP BY CATEGORY</h2>
           </div>
-          <div className="category-grid">
-            {shopCategories.map((category, index) => (
-              <Link className={`category-card ${['hoodies', 'tees', 'bottoms'][index] ?? 'tees'}`} style={{ '--reveal-delay': `${index * 90}ms` } as CSSProperties} data-reveal to={`/shop?categorySlug=${encodeURIComponent(category.slug)}`} key={category.id}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <h3>{category.name}</h3>
-                <ArrowRight aria-hidden="true" />
-              </Link>
-            ))}
-          </div>
+          <CategoryTiles categories={shopCategories} />
         </section>}
 
         <section className="products-section" id="new-arrivals">

@@ -112,5 +112,7 @@ export type Category = {
   name: string
   slug: string
   parentId: string | null
+  /** Set by an administrator; null until a category image is uploaded. */
+  imageUrl?: string | null
   children: Category[]
 }
