@@ -16,7 +16,7 @@ export function StoreHeader() {
           <Menu aria-hidden="true" />
         </button>
         <Link className="wordmark" to="/" aria-label="ROGUEON home">
-          ROGUEON<span aria-hidden="true">®</span>
+          <i className="brand-star" aria-hidden="true" />ROGUEON<span aria-hidden="true">®</span>
         </Link>
         <nav className="desktop-nav" aria-label="Primary navigation">
           <NavLink to="/shop">Shop</NavLink>
@@ -42,7 +42,7 @@ export function StoreHeader() {
 
       <div className={`mobile-drawer ${menuOpen ? 'open' : ''}`} aria-hidden={!menuOpen}>
         <div className="mobile-drawer-head">
-          <span className="wordmark">ROGUEON®</span>
+          <span className="wordmark"><i className="brand-star" aria-hidden="true" />ROGUEON®</span>
           <button className="icon-button" type="button" aria-label="Close menu" onClick={() => setMenuOpen(false)}><X /></button>
         </div>
         <nav aria-label="Mobile navigation">

@@ -4,7 +4,7 @@ export function StoreFooter() {
   return (
     <footer className="store-footer">
       <div className="footer-brand">
-        <Link className="wordmark" to="/">ROGUEON®</Link>
+        <Link className="wordmark" to="/"><i className="brand-star" aria-hidden="true" />ROGUEON®</Link>
         <span className="footer-meta">Sambala Complex, Boudha, Kathmandu</span>
         <a className="footer-meta" href="tel:+9779761846811">+977 9761846811</a>
       </div>
