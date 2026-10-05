@@ -737,3 +737,9 @@
 .mobile-drawer nav a { padding: 15px 2px; align-items: center; border-bottom-color: var(--line); font-size: 20px; letter-spacing: .01em; }
 .mobile-drawer nav span { font-size: 9px; opacity: .5; }
 .drawer-signout { min-height: 44px; border-top-color: var(--line); font-size: 10px; letter-spacing: .12em; }
+
+/* Main hero button: solid white so it reads as the primary action. */
+.primary-cta { background: #fff; color: var(--ink); border-color: #fff; }
+.primary-cta:hover { background: transparent; color: #fff; }
+.primary-cta svg { transition: transform .25s ease; }
+.primary-cta:hover svg { transform: translateY(3px); }
