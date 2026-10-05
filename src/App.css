@@ -703,3 +703,37 @@
   .carousel-dots i.active { width: 20px; border-radius: 999px; background: #fff; }
 }
 @media (prefers-reduced-motion: reduce) { .carousel-track { scroll-behavior: auto; } }
+
+/* Every category in one sideways-scrolling row. A few categories stretch to
+   fill the row; many keep a set width and the row scrolls. */
+.category-tiles { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scroll-behavior: smooth; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scroll-padding-inline: var(--gutter); }
+.category-tiles::-webkit-scrollbar { display: none; }
+.category-tile { flex: 1 0 min(300px, 22vw); width: auto; scroll-snap-align: start; }
+.rail-arrows { display: flex; gap: 8px; }
+.rail-arrows button { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; transition: background .2s ease, color .2s ease, opacity .2s ease; }
+.rail-arrows button:hover:not(:disabled) { background: var(--ink); color: #fff; }
+.rail-arrows button:disabled { opacity: .28; cursor: default; }
+.rail-arrows svg { width: 16px; height: 16px; }
+@media (max-width: 900px) {
+  .category-tiles { gap: 9px; }
+  .category-tile, .category-tile:last-child:nth-child(odd) { flex-basis: 40vw; height: auto; aspect-ratio: 4 / 5; }
+  .category-tile-label { padding: 12px; gap: 6px; }
+  .category-tile-label strong { font-size: clamp(18px, 5.4vw, 26px); }
+  .category-tile-label em { font-size: 8px; }
+}
+@media (hover: none) { .rail-arrows { display: none; } }
+
+/* Phones: the heading link is a small text link on the heading's baseline. */
+@media (max-width: 900px) {
+  .section-heading-row { align-items: flex-end; }
+  .section-heading-row > a { width: auto; height: auto; flex: none; display: inline-flex; padding: 0 0 5px; margin-bottom: 3px; border: 0; border-bottom: 1px solid currentColor; font-size: 9px; white-space: nowrap; }
+  .section-heading-row > a svg { width: 13px; height: 13px; }
+}
+
+/* Phone menu: calmer type and tighter rows. */
+.mobile-drawer { inset: 0 auto 0 0; width: min(82vw, 320px); padding: 16px 20px 20px; }
+.mobile-drawer .wordmark { font-size: 21px; }
+.mobile-drawer nav { margin-top: 34px; }
+.mobile-drawer nav a { padding: 15px 2px; align-items: center; border-bottom-color: var(--line); font-size: 20px; letter-spacing: .01em; }
+.mobile-drawer nav span { font-size: 9px; opacity: .5; }
+.drawer-signout { min-height: 44px; border-top-color: var(--line); font-size: 10px; letter-spacing: .12em; }
