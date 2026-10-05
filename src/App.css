@@ -605,3 +605,34 @@
   /* An odd tile left on its own row spans the full width. */
   .category-tile:last-child:nth-child(odd) { grid-column: 1 / -1; aspect-ratio: 16 / 11; }
 }
+
+/* Delivery area picker */
+.area-select { position: relative; }
+.area-select-input { position: relative; }
+.area-select-input svg { position: absolute; left: 14px; top: 50%; width: 15px; height: 15px; transform: translateY(-50%); opacity: .55; pointer-events: none; }
+.area-select-input input { width: 100%; min-height: 54px; padding: 12px 14px 12px 40px; border: 1px solid var(--line); border-radius: 0; outline: 0; background: #fbfaf7; font: inherit; }
+.area-select-input input:focus { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); background: #fff; }
+.area-select-input input.has-value::placeholder { color: var(--ink); opacity: 1; font-weight: 700; }
+.area-select-list { position: absolute; z-index: 30; top: 100%; left: 0; right: 0; max-height: 290px; margin: 0; padding: 0; overflow-y: auto; list-style: none; border: 1px solid var(--ink); border-top: 0; background: #fff; box-shadow: 0 18px 40px rgba(0, 0, 0, .14); }
+.area-select-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; border-top: 1px solid var(--line); cursor: pointer; }
+.area-select-list li:first-child { border-top: 0; }
+.area-select-list li.active { background: #f3f1ec; }
+.area-select-list li.empty { cursor: default; font-size: 12px; opacity: .7; }
+.area-select-list li span { display: grid; gap: 2px; min-width: 0; }
+.area-select-list li strong { font-size: 13px; }
+.area-select-list li em { font-style: normal; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }
+.area-select-list li small { font-size: 11px; opacity: .6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.area-select-list li svg { width: 15px; height: 15px; flex: none; }
+.area-select-note, .summary-note { display: block; margin-top: 8px; font-size: 11px; }
+.area-select-note button, .summary-note button { padding: 0; border: 0; background: none; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.address-area-prompt { display: grid !important; gap: 8px; padding: 18px; border: 1px solid var(--ink); background: #fbfaf7; cursor: default; }
+.address-area-prompt strong { font-size: 12px; }
+.address-area-prompt p { margin: 0; font-size: 12px; opacity: .7; }
+.address-card .text-button { width: auto; height: auto; margin-top: 10px; padding: 0; border: 0; background: none; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; text-decoration: underline; cursor: pointer; }
+.address-card .text-button.needs-area { color: #b3261e; }
+.address-area-edit { display: grid; gap: 4px; margin-top: 12px; min-width: min(320px, 70vw); }
+.order-summary dl .delivery-total { padding-top: 14px; border-top: 1px solid var(--ink); font-size: 13px; font-weight: 900; }
+.address-area-prompt { grid-column: 1 / -1; }
+.address-options .area-select input { position: static; opacity: 1; }
+.address-options .area-select-input svg { width: 15px; }
+.address-card .text-button { display: inline-block; }

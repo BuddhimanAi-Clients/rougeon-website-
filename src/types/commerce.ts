@@ -22,8 +22,17 @@ export type Address = {
   label: string
   fullAddress: string
   city: string
+  /** Courier delivery area. Missing on addresses saved before live delivery pricing. */
+  ncmBranch: string | null
   phone: string
   isDefault: boolean
+}
+
+export type DeliveryBranch = {
+  name: string
+  district: string | null
+  province: string | null
+  areas: string | null
 }
 
 export type WishlistItem = {
@@ -77,6 +86,7 @@ export type Order = {
   shippingFee: string
   shippingDeliveryFee: string
   shippingPickupFee: string
+  shippingBranch?: string | null
   total: string
   advancePaymentAmount: string
   codCollectionAmount: string
