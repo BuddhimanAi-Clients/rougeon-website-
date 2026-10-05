@@ -8,6 +8,7 @@ import { apiRequest } from '../lib/api'
 import { authClient } from '../lib/auth-client'
 import type { Product } from '../types/catalog'
 import type { ApiData, Cart } from '../types/commerce'
+import { ProductGallery } from '../components/ProductGallery'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 const money = new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 })
@@ -56,13 +57,10 @@ export function ProductDetailPage() {
   if (product.isPending) return <div className="detail-loading"><div className="product-skeleton" /><div className="product-skeleton" /></div>
   if (product.isError || !product.data) return <div className="collection-state page-state"><p>PRODUCT NOT FOUND</p><Link to="/shop">Return to shop</Link></div>
 
-  const images = product.data.images.length ? product.data.images : [null]
 
   return (
     <div className="product-detail-page">
-      <div className="product-gallery">
-        {images.map((image, index) => image ? <img src={image} alt={`${product.data.name} view ${index + 1}`} key={image} /> : <div className="detail-image-fallback" key="fallback"><span>R</span></div>)}
-      </div>
+      <ProductGallery images={product.data.images} name={product.data.name} />
       <aside className="product-purchase">
         <Link className="back-link" to="/shop"><ArrowLeft /> Back to shop</Link>
         <p className="eyebrow">{product.data.category.name}</p>
