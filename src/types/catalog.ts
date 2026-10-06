@@ -14,6 +14,8 @@ export type Product = {
   slug: string
   description: string
   images: string[]
+  /** Photos with the colour they show; a null colour suits every colour. */
+  media?: Array<{ url: string; color: string | null }>
   createdAt: string
   category: {
     id: string
