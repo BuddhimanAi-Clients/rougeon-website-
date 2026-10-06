@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Check, Heart, Minus, Plus, ShieldCheck, ShoppingBag } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -36,6 +36,26 @@ export function ProductDetailPage() {
   const selectedVariant = product.data?.variants.find((variant) => variant.id === variantId)
   usePageTitle(product.data?.name ?? 'Product')
 
+  const colours = useMemo(() => [...new Set((product.data?.variants ?? []).map((variant) => variant.color))], [product.data])
+  const selectedColour = selectedVariant?.color ?? colours[0] ?? ''
+  // Photos follow the chosen colour: that colour's own photos first, then the
+  // general ones. A colour without photos falls back to the general set.
+  const galleryImages = useMemo(() => {
+    const media = product.data?.media ?? []
+    if (media.length === 0) return product.data?.images ?? []
+    const own = media.filter((image) => image.color !== null && image.color.toLowerCase() === selectedColour.toLowerCase()).map((image) => image.url)
+    const general = media.filter((image) => image.color === null).map((image) => image.url)
+    if (own.length > 0) return [...own, ...general]
+    return general.length > 0 ? general : media.map((image) => image.url)
+  }, [product.data, selectedColour])
+
+  function chooseColour(colour: string) {
+    const options = (product.data?.variants ?? []).filter((variant) => variant.color === colour)
+    // Keep the size the customer already picked when this colour has it in stock.
+    const next = options.find((variant) => variant.available && variant.size === selectedVariant?.size) ?? options.find((variant) => variant.available) ?? options[0]
+    if (next) { setVariantId(next.id); setQuantity(1) }
+  }
+
   const addToCart = useMutation({
     mutationFn: async () => {
       if (!selectedVariant) throw new Error('Select a variant before adding this item to your bag')
@@ -60,7 +80,7 @@ export function ProductDetailPage() {
 
   return (
     <div className="product-detail-page">
-      <ProductGallery images={product.data.images} name={product.data.name} />
+      <ProductGallery images={galleryImages} name={product.data.name} />
       <aside className="product-purchase">
         <Link className="back-link" to="/shop"><ArrowLeft /> Back to shop</Link>
         <p className="eyebrow">{product.data.category.name}</p>
@@ -68,11 +88,25 @@ export function ProductDetailPage() {
         <p className="detail-price">{selectedVariant ? money.format(Number(selectedVariant.price)) : '—'}</p>
         <p className="detail-description">{product.data.description}</p>
 
+        {colours.length > 1 && (
+          <fieldset className="variant-picker colour-picker">
+            <legend>Colour · {selectedColour}</legend>
+            <div>{colours.map((colour) => {
+              const inStock = product.data.variants.some((variant) => variant.color === colour && variant.available)
+              return (
+                <button className={(selectedColour === colour ? 'selected ' : '') + (!inStock ? 'unavailable' : '')} type="button" key={colour} aria-pressed={selectedColour === colour} onClick={() => chooseColour(colour)}>
+                  <span>{colour}</span>{!inStock && <small>Sold out</small>}{selectedColour === colour && <Check />}
+                </button>
+              )
+            })}</div>
+          </fieldset>
+        )}
+
         <fieldset className="variant-picker">
           <legend>Select size</legend>
-          <div>{product.data.variants.map((variant) => (
-            <button className={(selectedVariant?.id === variant.id ? 'selected ' : '') + (!variant.available ? 'unavailable' : '')} type="button" key={variant.id} disabled={!variant.available} onClick={() => setVariantId(variant.id)}>
-              <span>{variant.size}</span><small>{variant.color}</small>{selectedVariant?.id === variant.id && <Check />}
+          <div>{product.data.variants.filter((variant) => colours.length <= 1 || variant.color === selectedColour).map((variant) => (
+            <button className={(selectedVariant?.id === variant.id ? 'selected ' : '') + (!variant.available ? 'unavailable' : '')} type="button" key={variant.id} disabled={!variant.available} onClick={() => { setVariantId(variant.id); setQuantity(1) }}>
+              <span>{variant.size}</span><small>{colours.length > 1 ? (variant.available ? '' : 'Sold out') : variant.color}</small>{selectedVariant?.id === variant.id && <Check />}
             </button>
           ))}</div>
         </fieldset>
