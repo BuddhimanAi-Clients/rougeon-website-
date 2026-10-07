@@ -743,3 +743,50 @@
 .primary-cta:hover { background: transparent; color: #fff; }
 .primary-cta svg { transition: transform .25s ease; }
 .primary-cta:hover svg { transform: translateY(3px); }
+
+/* Shopping pages (bag, checkout, payment, orders): calmer headings and less
+   empty banner on large screens, with the summary staying in view. */
+.page-hero.compact { min-height: 0; padding-top: clamp(34px, 4vw, 56px); padding-bottom: clamp(26px, 3vw, 40px); }
+.page-hero h1, .checkout-heading h1, .payment-heading h1, .order-detail-head h1, .account-head h1 { font-size: clamp(36px, 4.4vw, 64px); line-height: .92; }
+.checkout-heading, .payment-heading { margin: clamp(20px, 3vw, 38px) 0 clamp(26px, 3vw, 44px); }
+.checkout-page, .payment-page, .order-detail-page, .cart-layout { padding-top: clamp(22px, 3vw, 44px); }
+.checkout-layout { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); gap: clamp(28px, 4vw, 56px); }
+.cart-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: clamp(28px, 4vw, 56px); }
+.payment-amount strong { font-size: clamp(34px, 4vw, 56px); }
+@media (min-width: 1001px) {
+  .checkout-summary, .cart-layout > .order-summary { position: sticky; top: 100px; }
+}
+@media (max-width: 1000px) {
+  .cart-layout, .checkout-layout { grid-template-columns: 1fr; }
+}
+
+/* Shopping pages: text that is comfortable to read. The original sizes
+   (8-11px) were too small next to the large headings. */
+.order-summary dl div, .totals-card dl div, .checkout-lines > div, .payment-breakdown div, .payment-details dl div { font-size: 13px; }
+.checkout-lines small { font-size: 11px; }
+.order-summary > small { font-size: 11px; }
+.order-summary .eyebrow { font-size: 11px; }
+.order-summary dl .delivery-total { font-size: 15px; }
+.checkout-step-title p { font-size: 12.5px; }
+.guest-grid label > span, .address-form label > span, .stack-form label > span { font-size: 10.5px; }
+.payment-method-choice label strong { font-size: 13.5px; }
+.payment-method-choice label span { font-size: 12px; line-height: 1.5; }
+.checkout-login-note { font-size: 12px; }
+.proof-unavailable strong, .proof-upload strong { font-size: 12px; }
+.proof-unavailable p, .proof-upload p { font-size: 12px; }
+.instruction-copy { font-size: 13px; }
+.payment-amount span { font-size: 11px; }
+.payment-amount span small { font-size: 11px; }
+.qr-panel > p { font-size: 10.5px; }
+.qr-panel > button { font-size: 13px; }
+
+/* Payment page: the QR stays beside the instructions while they scroll, and
+   the instruction column is not padded so far that it looks empty. */
+.payment-details { padding: clamp(24px, 3.4vw, 48px); }
+.qr-panel { padding: clamp(24px, 3.4vw, 48px); }
+@media (min-width: 761px) {
+  .payment-layout { grid-template-columns: minmax(320px, .8fr) minmax(0, 1fr); align-items: start; }
+  .qr-panel { position: sticky; top: 96px; border-right: 0; }
+  .payment-details { border-left: 1px solid var(--ink); }
+  .qr-frame { width: min(100%, 440px); }
+}
