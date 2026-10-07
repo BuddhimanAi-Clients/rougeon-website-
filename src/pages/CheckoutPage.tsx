@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { useCart } from '../hooks/useCart'
 import { apiRequest } from '../lib/api'
 import { authClient } from '../lib/auth-client'
-import type { Address, ApiData, CheckoutResult, DeliveryBranch } from '../types/commerce'
+import type { Address, ApiData, CheckoutResult, DeliveryBranch, DeliveryType } from '../types/commerce'
 import { DeliveryAreaSelect, deliveryAreaLabel } from '../components/DeliveryAreaSelect'
 import { useDeliveryQuote } from '../hooks/useDelivery'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -27,6 +27,7 @@ export function CheckoutPage() {
   const [guestWarning, setGuestWarning] = useState(false)
   const [guestConfirmed, setGuestConfirmed] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'qr' | 'cod'>('qr')
+  const [deliveryChoice, setDeliveryChoice] = useState<DeliveryType>('Door2Door')
   const addresses = useQuery({
     queryKey: ['addresses'],
     enabled: Boolean(session),
@@ -37,7 +38,11 @@ export function CheckoutPage() {
   const selectedAddress = addresses.data?.find((address) => address.id === selectedAddressId)
   const deliveryBranch = session ? selectedAddress?.ncmBranch ?? null : guest.ncmBranch || null
   const deliveryQuote = useDeliveryQuote(deliveryBranch)
-  const deliveryFee = deliveryBranch && deliveryQuote.data ? Number(deliveryQuote.data.deliveryFee) : null
+  const deliveryOptions = deliveryBranch && deliveryQuote.data ? deliveryQuote.data.options ?? [{ deliveryType: 'Door2Door' as DeliveryType, deliveryFee: deliveryQuote.data.deliveryFee }] : []
+  // Falls back to home delivery when the chosen area has no branch collection.
+  const deliveryOption = deliveryOptions.find((option) => option.deliveryType === deliveryChoice) ?? deliveryOptions[0]
+  const deliveryType: DeliveryType = deliveryOption?.deliveryType ?? 'Door2Door'
+  const deliveryFee = deliveryOption ? Number(deliveryOption.deliveryFee) : null
   // Addresses saved before live delivery pricing get their area set right here.
   const setAddressArea = useMutation({
     mutationFn: ({ id, branch }: { id: string; branch: DeliveryBranch }) => apiRequest(`/api/v1/addresses/${id}`, { method: 'PATCH', body: JSON.stringify({ ncmBranch: branch.name, city: deliveryAreaLabel(branch.district ?? branch.name) }) }),
@@ -53,7 +58,7 @@ export function CheckoutPage() {
   const checkout = useMutation({
     mutationFn: async () => (await apiRequest<ApiData<CheckoutResult>>('/api/v1/checkout', {
       method: 'POST',
-      body: JSON.stringify(session ? { shippingAddressId: selectedAddressId, paymentMethod } : { guest, paymentMethod }),
+      body: JSON.stringify(session ? { shippingAddressId: selectedAddressId, paymentMethod, deliveryType } : { guest, paymentMethod, deliveryType }),
     })).data,
     onSuccess: (result) => navigate(`/payment/${result.order.id}`, { state: { checkout: result } }),
     onError: (error: Error & { code?: string }) => { if (error.code === 'ADDRESS_CHANGED') queryClient.invalidateQueries({ queryKey: ['addresses'] }); if (error.code === 'CUSTOMER_PROFILE_REQUIRED') { navigate('/account?tab=profile&returnTo=%2Fcheckout'); return } toast.error(error.message) },
@@ -99,13 +104,14 @@ export function CheckoutPage() {
           )}
           {!session && <p className="checkout-login-note">Already have saved details? <Link to="/auth/sign-in" state={{ from: '/checkout' }}>Sign in before checkout</Link>.</p>}
           {session && membershipProfile.data?.data && !('id' in membershipProfile.data.data) && <div className="inline-empty membership-profile-callout"><p><strong>One quick step before payment.</strong><br/>Add your name, phone and date of birth so this purchase can earn membership progress.</p><Link className="solid-button" to="/account?tab=profile&returnTo=%2Fcheckout">Complete profile <ArrowRight /></Link></div>}
+          {deliveryOptions.length > 1 && <div className="delivery-method"><h3>How would you like to receive it?</h3><div className="payment-method-choice" role="radiogroup" aria-label="Delivery method">{deliveryOptions.map((option) => <label key={option.deliveryType} className={deliveryType === option.deliveryType ? 'selected' : ''}><input type="radio" name="deliveryType" checked={deliveryType === option.deliveryType} onChange={() => setDeliveryChoice(option.deliveryType)} /><strong>{option.deliveryType === 'Door2Branch' ? 'Collect from branch' : 'Home delivery'}<em>{money.format(Number(option.deliveryFee))}</em></strong><span>{option.deliveryType === 'Door2Branch' ? `Pick it up yourself from the Nepal Can Move ${deliveryAreaLabel(deliveryBranch ?? '')} branch. They call you when it arrives.` : 'Nepal Can Move brings it to your address.'}</span></label>)}</div></div>}
           <div className="checkout-step-title second"><span>02</span><div><h2>Payment method</h2><p>You will see the payment QR and the exact amount on the next step.</p></div></div>
-          <div className="payment-method-choice" role="radiogroup" aria-label="Payment method"><label className={paymentMethod === 'qr' ? 'selected' : ''}><input type="radio" name="paymentMethod" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} /><strong>Pay in full online</strong><span>Pay the complete order total by QR.</span></label><label className={paymentMethod === 'cod' ? 'selected' : ''}><input type="radio" name="paymentMethod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} /><strong>Cash on delivery</strong><span>Pay the delivery fee and any advance now by QR. Pay the rest to the courier when your order arrives.</span></label></div>
+          <div className="payment-method-choice" role="radiogroup" aria-label="Payment method"><label className={paymentMethod === 'qr' ? 'selected' : ''}><input type="radio" name="paymentMethod" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} /><strong>Pay in full online</strong><span>Pay the complete order total by QR.</span></label><label className={paymentMethod === 'cod' ? 'selected' : ''}><input type="radio" name="paymentMethod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} /><strong>Cash on delivery</strong><span>Pay the delivery fee and any advance now by QR. {deliveryType === 'Door2Branch' ? 'Pay the rest at the branch when you collect your order.' : 'Pay the rest to the courier when your order arrives.'}</span></label></div>
         </section>
         <aside className="order-summary checkout-summary">
           <p className="eyebrow">YOUR ORDER</p>
           <div className="checkout-lines">{cart.data?.items.map((item) => <div key={item.id}><span>{item.qty} × {item.product.name}<small>{item.variant.size} / {item.variant.color}{membershipRate > 0 && item.product.membershipDiscountEligible === false ? ' · no member discount' : ''}</small></span><strong>{money.format(Number(item.lineTotal))}</strong></div>)}</div>
-          <dl><div><dt>Subtotal</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0))}</dd></div>{session && membership && <><div><dt>Membership</dt><dd>{membership.tier?.name ?? 'No membership'} · {membership.tier?.discountPercent ?? '0'}%</dd></div>{membershipDiscountPreview > 0 && <><div><dt>Member discount (estimated)</dt><dd>−{money.format(membershipDiscountPreview)}</dd></div><div><dt>Merchandise after discount</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0) - membershipDiscountPreview)}</dd></div></>}<div><dt>Eligible this year</dt><dd>{money.format(Number(membership.eligibleNetSpend ?? 0))}</dd></div>{membership.nextTier && <div><dt>Next tier</dt><dd>{membership.nextTier.name}: {money.format(Number(membership.nextTier.remaining))} to go</dd></div>}</>}<div><dt>Delivery</dt><dd>{!deliveryBranch ? 'Choose delivery area' : deliveryFee !== null ? money.format(deliveryFee) : deliveryQuote.isError ? 'Unavailable right now' : 'Calculating…'}</dd></div>{deliveryFee !== null && <div className="delivery-total"><dt>{membershipDiscountPreview > 0 ? 'Total (estimated)' : 'Total'}</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0) - membershipDiscountPreview + deliveryFee)}</dd></div>}</dl>{deliveryBranch && deliveryQuote.isError && <small className="summary-note" role="alert">We could not calculate delivery right now. <button type="button" onClick={() => deliveryQuote.refetch()}>Try again</button></small>}
+          <dl><div><dt>Subtotal</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0))}</dd></div>{session && membership && <><div><dt>Membership</dt><dd>{membership.tier?.name ?? 'No membership'} · {membership.tier?.discountPercent ?? '0'}%</dd></div>{membershipDiscountPreview > 0 && <><div><dt>Member discount (estimated)</dt><dd>−{money.format(membershipDiscountPreview)}</dd></div><div><dt>Merchandise after discount</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0) - membershipDiscountPreview)}</dd></div></>}<div><dt>Eligible this year</dt><dd>{money.format(Number(membership.eligibleNetSpend ?? 0))}</dd></div>{membership.nextTier && <div><dt>Next tier</dt><dd>{membership.nextTier.name}: {money.format(Number(membership.nextTier.remaining))} to go</dd></div>}</>}<div><dt>{deliveryType === 'Door2Branch' ? 'Delivery (collect from branch)' : 'Delivery'}</dt><dd>{!deliveryBranch ? 'Choose delivery area' : deliveryFee !== null ? money.format(deliveryFee) : deliveryQuote.isError ? 'Unavailable right now' : 'Calculating…'}</dd></div>{deliveryFee !== null && <div className="delivery-total"><dt>{membershipDiscountPreview > 0 ? 'Total (estimated)' : 'Total'}</dt><dd>{money.format(Number(cart.data?.subtotal ?? 0) - membershipDiscountPreview + deliveryFee)}</dd></div>}</dl>{deliveryBranch && deliveryQuote.isError && <small className="summary-note" role="alert">We could not calculate delivery right now. <button type="button" onClick={() => deliveryQuote.refetch()}>Try again</button></small>}
           <button className="solid-button" type="submit" disabled={checkout.isPending || setAddressArea.isPending || (Boolean(session) && (!selectedAddressId || (membershipProfile.data?.data !== undefined && !('id' in membershipProfile.data.data))))}>{checkout.isPending ? 'Placing order…' : paymentMethod === 'cod' ? 'Place order & pay advance' : 'Place order & pay'} <ArrowRight /></button>
           <small>Your order is confirmed once we verify your payment.</small>
         </aside>
