@@ -28,6 +28,8 @@ export type Address = {
   isDefault: boolean
 }
 
+export type DeliveryType = 'Door2Door' | 'Door2Branch'
+
 export type DeliveryBranch = {
   name: string
   district: string | null
@@ -87,6 +89,8 @@ export type Order = {
   shippingDeliveryFee: string
   shippingPickupFee: string
   shippingBranch?: string | null
+  /** Home delivery, or collected by the customer from the courier branch. */
+  shippingDeliveryType?: DeliveryType
   total: string
   advancePaymentAmount: string
   codCollectionAmount: string
@@ -112,7 +116,7 @@ export type PaymentInstructions = {
 }
 
 export type CheckoutResult = {
-  order: Pick<Order, 'id' | 'orderNumber' | 'status' | 'paymentStatus' | 'paymentMethod' | 'subtotal' | 'merchandiseDiscount' | 'membershipDiscountPercent' | 'shippingFee' | 'shippingDeliveryFee' | 'shippingPickupFee' | 'total' | 'advancePaymentAmount' | 'codCollectionAmount' | 'codMerchandiseAdvancePercent' | 'createdAt'>
+  order: Pick<Order, 'id' | 'orderNumber' | 'status' | 'paymentStatus' | 'paymentMethod' | 'subtotal' | 'merchandiseDiscount' | 'membershipDiscountPercent' | 'shippingFee' | 'shippingDeliveryFee' | 'shippingPickupFee' | 'shippingBranch' | 'shippingDeliveryType' | 'total' | 'advancePaymentAmount' | 'codCollectionAmount' | 'codMerchandiseAdvancePercent' | 'createdAt'>
   payment: Pick<Payment, 'id' | 'status' | 'amount' | 'createdAt'>
   paymentInstructions: PaymentInstructions
 }

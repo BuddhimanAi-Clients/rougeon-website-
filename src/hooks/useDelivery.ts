@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiRequest } from '../lib/api'
-import type { ApiData, DeliveryBranch } from '../types/commerce'
+import type { ApiData, DeliveryBranch, DeliveryType } from '../types/commerce'
 
 const HOUR = 60 * 60 * 1000
 
@@ -13,13 +13,13 @@ export function useDeliveryBranches() {
   })
 }
 
-/** The one Delivery amount the customer pays for the chosen area. */
+/** Delivery amounts for the chosen area: home delivery first, then branch collection when the courier offers it. */
 export function useDeliveryQuote(branch: string | null | undefined) {
   return useQuery({
     queryKey: ['delivery-quote', branch],
     enabled: Boolean(branch),
     staleTime: HOUR / 2,
     retry: 1,
-    queryFn: async () => (await apiRequest<ApiData<{ branch: string | null; deliveryFee: string }>>(`/api/v1/shipping/quote?branch=${encodeURIComponent(branch ?? '')}`)).data,
+    queryFn: async () => (await apiRequest<ApiData<{ branch: string | null; deliveryFee: string; options?: Array<{ deliveryType: DeliveryType; deliveryFee: string }> }>>(`/api/v1/shipping/quote?branch=${encodeURIComponent(branch ?? '')}`)).data,
   })
 }

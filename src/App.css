@@ -790,3 +790,10 @@
   .payment-details { border-left: 1px solid var(--ink); }
   .qr-frame { width: min(100%, 440px); }
 }
+
+/* Delivery method choice at checkout */
+.delivery-method { margin-top: 22px; }
+.delivery-method h3 { margin: 0; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+.delivery-method .payment-method-choice strong { display: flex; justify-content: space-between; gap: 10px; }
+.delivery-method .payment-method-choice em { font-style: normal; white-space: nowrap; }
+.collect-note { margin: 0 0 12px; padding: 10px 12px; background: #f5f4f0; font-size: 12.5px; line-height: 1.5; }
