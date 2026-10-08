@@ -797,3 +797,12 @@
 .delivery-method .payment-method-choice strong { display: flex; justify-content: space-between; gap: 10px; }
 .delivery-method .payment-method-choice em { font-style: normal; white-space: nowrap; }
 .collect-note { margin: 0 0 12px; padding: 10px 12px; background: #f5f4f0; font-size: 12.5px; line-height: 1.5; }
+
+/* Product page: calmer photo size */
+@media (min-width: 1001px) {
+  .product-detail-page { grid-template-columns: minmax(0, .9fr) minmax(380px, 1.1fr); }
+  .carousel-slide { height: min(calc(100svh - 78px - 92px - 80px), 600px); min-height: 360px; }
+}
+@media (max-width: 1000px) {
+  .carousel-slide { aspect-ratio: 1 / 1; max-height: 58svh; }
+}
